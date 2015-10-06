@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>Force-Directed Graph of "Les Miserables" Characters</title>
+<style>
+
+.link {
+  stroke: #ccc;
+  stroke-width: 1.5px;
+}
+
+.node text {
+  cursor: pointer;
+  font: 10px sans-serif;
+}
+
+</style>
+<body>
+<script type="text/javascript" src="d3.min.js"></script>
+<script type="text/javascript" src="jquery-2.1.3.min.js"></script>
+<script>
+var width = $(window).width()-20;
+var height = $(window).height()-20;
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+var force = d3.layout.force()
+    .gravity(.05)
+    .distance(100)
+    .charge(-100)
+    .size([width, height]);
+
+var drag = force.drag()
+    .on("dragstart", dragstart);
+
+d3.json("graph.json", function(error, json) {
+  if (error) throw error;
+
+  force
+      .nodes(json.nodes)
+      .links(json.links)
+      .start();
+
+  var link = svg.selectAll(".link")
+      .data(json.links)
+    .enter().append("line")
+      .attr("class", "link");
+
+  var node = svg.selectAll(".node")
+      .data(json.nodes)
+    .enter().append("g")
+      .attr("class", "node")
+      .attr("style", "cursor:pointer")
+      .on("dblclick", dblclick)
+      .call(force.drag);
+
+  node.append("image")
+      .attr("xlink:href", function(d) { 
+console.log(d); 
+if(d.name.toLowerCase() === "javert") 
+return "javert.jpeg" 
+else return "Question_mark.jpg"})
+      .attr("x", -8)
+      .attr("y", -8)
+      .attr("width", 25)
+      .attr("height", 25);
+
+  node.append("text")
+      .attr("dx", 12)
+      .attr("dy", ".35em")
+      .text(function(d) { return d.name });
+
+  force.on("tick", function() {
+    link.attr("x1", function(d) { return d.source.x; })
+        .attr("y1", function(d) { return d.source.y; })
+        .attr("x2", function(d) { return d.target.x; })
+        .attr("y2", function(d) { return d.target.y; });
+
+    node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+  });
+});
+
+function dblclick(d) {
+  d3.select(this).classed("fixed", d.fixed = false);
+}
+
+function dragstart(d) {
+  d3.select(this).classed("fixed", d.fixed = true);
+}
+
+</script>
+
